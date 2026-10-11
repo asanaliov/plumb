@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "crates/plumb-core",
+    "apps/plumb-cli",
+]
+resolver = "2"
