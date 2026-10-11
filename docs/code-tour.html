@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f5f5">
+  <title>Plumb Code Tour</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f5f5;
+      --paper-2: #ececec;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --soft: #7a8399;
+      --rule: #d9dbe1;
+      --accent: #eb6c36;
+      --accent-wash: #fceee8;
+      --green: #537b64;
+      --blue: #526b9b;
+      --radius: 18px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); }
+    button { font: inherit; }
+    .deck { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+    .topbar, .controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px clamp(18px, 4vw, 56px); }
+    .topbar { border-bottom: 1px solid var(--rule); }
+    .brand { display: flex; gap: 10px; align-items: center; font-weight: 750; letter-spacing: -.03em; }
+    .brand-mark { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; background: var(--accent); color: white; font-size: 14px; }
+    .top-note, .counter, .eyebrow, .tag { color: var(--muted); font-size: 12px; }
+    .top-note { text-align: right; }
+    main { display: grid; place-items: center; padding: clamp(14px, 3vw, 34px); }
+    .slide { display: none; width: min(1100px, 100%); min-height: min(690px, calc(100vh - 150px)); padding: clamp(24px, 5vw, 58px); background: white; border: 1px solid var(--rule); border-radius: var(--radius); box-shadow: 0 18px 60px rgba(45,49,66,.08); overflow: auto; }
+    .slide.active { display: flex; flex-direction: column; animation: enter .22s ease-out; }
+    @keyframes enter { from { opacity: .6; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 850px; margin-bottom: 18px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(42px, 7vw, 76px); font-weight: 400; line-height: .99; letter-spacing: -.045em; }
+    h2 { margin-bottom: 12px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(32px, 4vw, 48px); font-weight: 400; line-height: 1.05; letter-spacing: -.035em; }
+    h3 { margin-bottom: 8px; font-size: 16px; }
+    p { color: var(--muted); line-height: 1.62; }
+    .eyebrow { margin-bottom: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .lead { max-width: 720px; font-size: clamp(17px, 2vw, 21px); }
+    .accent { color: var(--accent); }
+    .cover { justify-content: center; position: relative; }
+    .cover::after { content: ""; position: absolute; width: 260px; height: 260px; right: 7%; bottom: 11%; border: 1px solid #f0b49b; border-radius: 50%; box-shadow: 0 0 0 28px #fdf5f1, 0 0 0 56px #fefaf8; z-index: 0; }
+    .cover > * { position: relative; z-index: 1; }
+    .cover .tag { display: inline-flex; align-self: flex-start; border: 1px solid #efc6b5; border-radius: 999px; padding: 8px 12px; margin-top: 26px; color: #8c482d; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card { border: 1px solid var(--rule); border-radius: 14px; padding: 18px; background: #fff; }
+    .card p:last-child { margin-bottom: 0; }
+    .analogy { background: var(--accent-wash); border-color: #f1c2ad; }
+    .analogy strong { color: #9a482a; }
+    .quiet { background: var(--paper); }
+    .future { border-style: dashed; background: #fbfbfc; }
+    .status { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; letter-spacing: .08em; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .dot.planned { background: white; border: 1.5px dashed var(--soft); }
+    .diagram { width: 100%; max-height: 310px; margin: 18px 0 8px; }
+    .diagram text { fill: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    .diagram .small { fill: var(--muted); font-size: 13px; }
+    .diagram .label { font-size: 15px; font-weight: 700; }
+    .diagram .box { fill: white; stroke: var(--ink); stroke-width: 1.5; }
+    .diagram .engine { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 2; }
+    .diagram .file { fill: var(--paper-2); stroke: var(--muted); stroke-width: 1.5; }
+    .diagram .planned-box { fill: white; stroke: var(--soft); stroke-width: 1.5; stroke-dasharray: 6 5; }
+    .diagram .arrow { fill: none; stroke: var(--muted); stroke-width: 2; marker-end: url(#tour-arrow); }
+    .diagram .arrow-future { fill: none; stroke: var(--soft); stroke-width: 1.7; stroke-dasharray: 6 5; marker-end: url(#tour-arrow-soft); }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 14px 0 22px; }
+    .step { min-height: 126px; border: 1px solid var(--rule); border-radius: 13px; padding: 14px; }
+    .step-num { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+    .step p { margin: 8px 0 0; font-size: 13px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    code { color: #884329; }
+    pre { margin: 0; overflow: auto; padding: 18px; border-radius: 12px; color: #f5f5f5; background: #272b39; font-size: 13px; line-height: 1.65; }
+    .code-label { margin-bottom: 8px; color: var(--soft); font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 10px; margin: 10px 0 22px; }
+    .flow-box { min-height: 114px; display: grid; align-content: center; gap: 7px; padding: 16px; border: 1px solid var(--rule); border-radius: 14px; background: var(--paper); }
+    .flow-box strong { font-size: 15px; }
+    .flow-box span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .flow-arrow { color: var(--accent); font-size: 25px; }
+    .type-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin: 22px 0; }
+    .type { min-height: 136px; padding: 14px; border-radius: 13px; background: var(--paper); border: 1px solid var(--rule); }
+    .type .symbol { display: grid; place-items: center; width: 32px; height: 32px; margin-bottom: 12px; border-radius: 9px; background: var(--accent-wash); color: var(--accent); font-weight: 750; }
+    .type strong { display: block; margin-bottom: 6px; font-size: 13px; }
+    .type small { color: var(--muted); line-height: 1.35; }
+    .file-list { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 14px; margin-top: 14px; }
+    .file-row { display: grid; grid-template-columns: minmax(0, 1.2fr) 1fr; gap: 12px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; align-items: start; }
+    .file-row code { font-size: 11px; overflow-wrap: anywhere; }
+    .file-row span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .repo-grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 12px; min-height: 0; flex: 1; margin-top: 12px; }
+    .repo-tree { overflow: auto; margin: 0; padding: 16px; border-radius: 12px; background: #272b39; color: #f5f5f5; font: 11px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .file-list.compact { grid-template-columns: 1fr 1fr; gap: 5px; margin: 0; align-content: start; }
+    .file-list.compact .file-row { grid-template-columns: 1fr; gap: 4px; padding: 7px 9px; }
+    .file-list.compact .file-row code { font-size: 10px; }
+    .file-list.compact .file-row span { font-size: 11px; }
+    .milestones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .milestone { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; padding: 14px; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; }
+    .milestone:first-child { background: var(--accent-wash); border-color: #f1c2ad; }
+    .milestone:last-child { grid-column: span 2; }
+    .mnum { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: white; border: 1px solid var(--rule); font-weight: 750; }
+    .milestone strong { display: block; margin-bottom: 4px; font-size: 13px; }
+    .milestone span { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .note { margin-top: auto; padding-top: 18px; color: var(--soft); font-size: 12px; line-height: 1.5; }
+    .controls { border-top: 1px solid var(--rule); }
+    .nav-group { display: flex; gap: 8px; }
+    .nav-btn { border: 1px solid var(--rule); border-radius: 10px; padding: 9px 13px; background: white; color: var(--ink); cursor: pointer; }
+    .nav-btn:hover { border-color: var(--accent); }
+    .nav-btn:focus-visible { outline: 3px solid #f1c2ad; outline-offset: 2px; }
+    .progress { position: fixed; inset: 0 auto auto 0; height: 3px; width: 0; background: var(--accent); transition: width .2s ease; }
+    .kbd { display: inline-block; border: 1px solid var(--rule); border-radius: 5px; padding: 1px 5px; color: var(--muted); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    @media (max-width: 760px) {
+      .slide { min-height: calc(100vh - 128px); padding: 25px 20px; }
+      .grid-2, .grid-3, .file-list { grid-template-columns: 1fr; }
+      .repo-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .type-grid { grid-template-columns: 1fr 1fr; }
+      .milestones { grid-template-columns: 1fr; }
+      .milestone:last-child { grid-column: auto; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-arrow { justify-self: center; transform: rotate(90deg); }
+      .top-note { display: none; }
+      .cover::after { opacity: .45; right: -70px; bottom: 4%; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+    @media print {
+      .topbar, .controls, .progress { display: none !important; }
+      .deck { display: block; }
+      main { display: block; padding: 0; }
+      .slide, .slide.active { display: flex !important; width: 100%; min-height: 100vh; border: 0; border-radius: 0; box-shadow: none; page-break-after: always; }
+      body { background: white; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="deck">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">P</span><span>Plumb Code Tour</span></div>
+      <div class="top-note">A visual guide to the current Rust workspace</div>
+    </header>
+    <main id="slides" aria-live="polite">
+      <section class="slide cover active" aria-labelledby="s1-title">
+        <div class="eyebrow">A guided tour of the codebase</div>
+        <h1 id="s1-title">One scene.<br><span class="accent">One shared engine.</span></h1>
+        <p class="lead">See how a command becomes a validated 3D object, how the scene is saved as JSON, and what each project file contributes.</p>
+        <div class="tag">Start with ./scripts/show-code-tour.sh · use ← → keys to navigate</div>
+        <div class="note">Current scope: Rust scene core and CLI are implemented. The desktop viewport and structured agent interface are roadmap work.</div>
+      </section>
+
+      <section class="slide" aria-labelledby="s2-title">
+        <div class="eyebrow">01 / The system</div>
+        <h2 id="s2-title">A front desk, a workshop, and a blueprint</h2>
+        <p>The CLI accepts a request. The core checks and changes the scene. JSON carries the saved result between runs.</p>
+        <svg class="diagram" viewBox="0 0 960 300" role="img" aria-labelledby="map-title map-desc">
+          <title id="map-title">Plumb code architecture</title>
+          <desc id="map-desc">The implemented CLI sends commands to plumb-core. The core validates and serializes a JSON scene. Desktop and structured agent clients are planned and will use the same core.</desc>
+          <defs>
+            <marker id="tour-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#4f5d75"/></marker>
+            <marker id="tour-arrow-soft" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#7a8399"/></marker>
+          </defs>
+          <path class="arrow" d="M245 146H354"/>
+          <path class="arrow" d="M606 146H716"/>
+          <path class="arrow-future" d="M245 72H292Q300 72 300 80V118Q300 126 308 126H354"/>
+          <path class="arrow-future" d="M245 230H292Q300 230 300 222V174Q300 166 308 166H354"/>
+          <rect class="planned-box" x="25" y="42" width="220" height="60" rx="12"/>
+          <text class="label" x="48" y="69">Desktop viewport</text><text class="small" x="48" y="88">planned visual client</text>
+          <rect class="box" x="25" y="116" width="220" height="60" rx="12"/>
+          <text class="label" x="48" y="143">Plumb CLI</text><text class="small" x="48" y="162">implemented command line</text>
+          <rect class="planned-box" x="25" y="200" width="220" height="60" rx="12"/>
+          <text class="label" x="48" y="227">Structured agent tools</text><text class="small" x="48" y="246">planned optional interface</text>
+          <rect class="engine" x="354" y="101" width="252" height="90" rx="16"/>
+          <text class="label" x="380" y="135">plumb-core</text><text class="small" x="380" y="159">model · validate · serialize</text><text class="small" x="380" y="179">one source of scene rules</text>
+          <rect class="file" x="716" y="101" width="220" height="90" rx="16"/>
+          <text class="label" x="742" y="135">scene.json</text><text class="small" x="742" y="159">saved scene data</text><text class="small" x="742" y="179">portable and inspectable</text>
+        </svg>
+        <div class="grid-3">
+          <div class="card analogy"><h3>Analogy</h3><p><strong>The CLI is the front desk.</strong> It translates a request into a core operation.</p></div>
+          <div class="card analogy"><h3>Analogy</h3><p><strong>The core is the workshop rulebook.</strong> Every client follows the same validation.</p></div>
+          <div class="card analogy"><h3>Analogy</h3><p><strong>JSON is the blueprint.</strong> It records the scene so another tool can reopen it.</p></div>
+        </div>
+      </section>
+
+      <section class="slide" aria-labelledby="s3-title">
+        <div class="eyebrow">02 / One command, end to end</div>
+        <h2 id="s3-title">From words to a saved box</h2>
+        <p>The CLI handles the outside edges: arguments in, file and result out. The core owns the actual modeling decision.</p>
+        <div class="steps">
+          <div class="step"><span class="step-num">01 · PARSE</span><p>Read the command and convert dimensions from text to numbers.</p></div>
+          <div class="step"><span class="step-num">02 · VALIDATE</span><p>Ask the core to reject empty names or dimensions that are not positive finite values.</p></div>
+          <div class="step"><span class="step-num">03 · UPDATE</span><p>Assign a stable ID and add the box to the scene object list.</p></div>
+          <div class="step"><span class="step-num">04 · SAVE</span><p>Serialize the scene and write the JSON file; report the new ID.</p></div>
+        </div>
+        <div class="grid-2">
+          <div><div class="code-label">Try it</div><pre>cargo run -p plumb-cli -- new scene.json
+cargo run -p plumb-cli -- add-box scene.json block 2 3 4
+cargo run -p plumb-cli -- move scene.json 1 1 0 0
+cargo run -p plumb-cli -- inspect scene.json</pre></div>
+          <div class="card analogy"><h3>Kitchen analogy</h3><p>The CLI is the waiter taking an order. It does not decide whether an ingredient is safe. The core is the kitchen: it checks the request, changes the recipe, and sends back the finished dish.</p><p><strong>Why share the core?</strong> A future viewport and agent tool should get the same result from the same operation.</p></div>
+        </div>
+      </section>
+
+      <section class="slide" aria-labelledby="s4-title">
+        <div class="eyebrow">03 / The scene model</div>
+        <h2 id="s4-title">A scene is a small address book of objects</h2>
+        <p>Each object has a durable address, a human name, a location, and a shape. The ID is the dependable handle.</p>
+        <div class="type-grid">
+          <div class="type"><span class="symbol">#</span><strong>ObjectId</strong><small>A stable numeric address, not its current row in a list.</small></div>
+          <div class="type"><span class="symbol">Aa</span><strong>name</strong><small>A label for people, such as “block”.</small></div>
+          <div class="type"><span class="symbol">x y z</span><strong>position</strong><small>The object’s location in 3D space.</small></div>
+          <div class="type"><span class="symbol">◇</span><strong>Geometry</strong><small>Today, the enum has one shape: Box.</small></div>
+          <div class="type"><span class="symbol">↔</span><strong>size</strong><small>Width, height, and depth as a Vec3.</small></div>
+        </div>
+        <div class="flow">
+          <div class="flow-box"><strong>Scene</strong><span>version: 1<br>next_id: 2<br>objects: [...]</span></div>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+          <div class="flow-box"><strong>Object #1</strong><span>name: block<br>position: (1, 0, 0)<br>geometry: Box</span></div>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+          <div class="flow-box"><strong>Box size</strong><span>x: 2<br>y: 3<br>z: 4</span></div>
+        </div>
+        <div class="card analogy"><h3>Library analogy</h3><p>The object ID is like a library catalog number. A book can move to a different shelf without changing its catalog number. Likewise, an object can move or shift its position in the vector without changing its identity.</p></div>
+        <div class="note">Current model limits: boxes only; position and dimensions are supported, while rotation, materials, deletion, and resize operations are not implemented yet.</div>
+      </section>
+
+      <section class="slide" aria-labelledby="s5-title">
+        <div class="eyebrow">04 / The core engine</div>
+        <h2 id="s5-title">The core is both the rulebook and referee</h2>
+        <p>Public methods are the gates into scene changes. Data from a file is checked again after parsing, because saved files can be edited or malformed.</p>
+        <div class="grid-2">
+          <div class="card">
+            <h3>When adding a box</h3>
+            <ol>
+              <li>Trim-check the name.</li>
+              <li>Check each dimension is finite and greater than zero.</li>
+              <li>Reserve the next ID, guarding against integer overflow.</li>
+              <li>Add the object at position zero.</li>
+            </ol>
+            <p><code>add_box(name, size) → Result&lt;ObjectId, SceneError&gt;</code></p>
+          </div>
+          <div class="card">
+            <h3>When moving an object</h3>
+            <ol>
+              <li>Reject NaN or infinite coordinates.</li>
+              <li>Find the object by stable ID.</li>
+              <li>Return ObjectNotFound if no matching ID exists.</li>
+              <li>Change the position only after validation passes.</li>
+            </ol>
+            <p><code>set_position(id, position) → Result&lt;(), SceneError&gt;</code></p>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:14px">
+          <div class="card quiet"><h3>SceneError</h3><p>A named outcome such as invalid dimensions or missing object. It gives callers something to report.</p></div>
+          <div class="card quiet"><h3>HashSet of IDs</h3><p>During file validation, a temporary set catches duplicate IDs. Think of it as a guest list that rejects repeated names.</p></div>
+          <div class="card analogy"><h3>Important boundary</h3><p>Validation lives in <strong>plumb-core</strong>. The CLI is not trusted to be the only caller.</p></div>
+        </div>
+      </section>
+
+      <section class="slide" aria-labelledby="s6-title">
+        <div class="eyebrow">05 / JSON and error path</div>
+        <h2 id="s6-title">Loading is unpacking, checking, then accepting</h2>
+        <div class="flow">
+          <div class="flow-box"><strong>scene.json</strong><span>Bytes on disk</span></div>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+          <div class="flow-box"><strong>serde_json</strong><span>Parses fields and types into Rust values</span></div>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+          <div class="flow-box"><strong>Scene::validate</strong><span>Checks version, unique IDs, names, positions, dimensions</span></div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <div class="code-label">A saved object, simplified</div>
+            <pre>{
+  "version": 1,
+  "next_id": 2,
+  "objects": [{
+    "id": 1,
+    "name": "block",
+    "position": {"x": 1, "y": 0, "z": 0},
+    "geometry": {
+      "type": "box",
+      "geometry": {"size": {"x": 2, "y": 3, "z": 4}}
+    }
+  }]
+}</pre>
+          </div>
+          <div class="card">
+            <h3>How failures travel</h3>
+            <p>A file error or core error becomes a readable message in <code>main</code>. The message goes to stderr and the program returns a failure exit code.</p>
+            <div class="card analogy"><h3>Airport security analogy</h3><p>Parsing checks that the suitcase has the right shape. Scene validation checks that its contents obey the rules before it enters the workshop.</p></div>
+          </div>
+        </div>
+        <div class="note">Serialization uses Serde derives. The scene format is versioned, and the loader rejects versions other than 1 today.</div>
+      </section>
+
+      <section class="slide" aria-labelledby="s7-title">
+        <div class="eyebrow">06 / File map</div>
+        <h2 id="s7-title">Every project file, in one view</h2>
+        <p>This map covers all tracked project files plus the local agent instructions. The tree is the shelf; the notes explain what each item is for.</p>
+        <div class="repo-grid">
+          <pre class="repo-tree" aria-label="Plumb repository file tree">plumb/
+├── Cargo.toml
+├── Cargo.lock
+├── README.md
+├── AGENTS.md*  (local)
+├── scripts/
+│   └── show-code-tour.sh
+├── apps/
+│   └── plumb-cli/
+│       ├── .gitignore
+│       ├── Cargo.toml
+│       └── src/main.rs
+├── crates/
+│   └── plumb-core/
+│       ├── .gitignore
+│       ├── Cargo.toml
+│       └── src/lib.rs
+└── docs/
+    ├── architecture.svg
+    └── code-tour.html
+
+target/  generated build output</pre>
+          <div class="file-list compact">
+            <div class="file-row"><code>Cargo.toml</code><span>Workspace membership and shared Cargo setup.</span></div>
+            <div class="file-row"><code>Cargo.lock</code><span>Exact dependency versions for repeatable builds.</span></div>
+            <div class="file-row"><code>README.md</code><span>Project overview, status, build steps, and CLI example.</span></div>
+            <div class="file-row"><code>AGENTS.md*</code><span>Local coding-agent instructions; currently untracked.</span></div>
+            <div class="file-row"><code>apps/plumb-cli/.gitignore</code><span>Ignores a package-local target directory.</span></div>
+            <div class="file-row"><code>apps/plumb-cli/Cargo.toml</code><span>CLI package metadata and dependency on plumb-core.</span></div>
+            <div class="file-row"><code>apps/plumb-cli/src/main.rs</code><span>Commands, argument parsing, file I/O, and exit status.</span></div>
+            <div class="file-row"><code>crates/plumb-core/.gitignore</code><span>Ignores a package-local target directory.</span></div>
+            <div class="file-row"><code>crates/plumb-core/Cargo.toml</code><span>Core package metadata and Serde dependencies.</span></div>
+            <div class="file-row"><code>crates/plumb-core/src/lib.rs</code><span>Scene types, validation, operations, JSON, and three tests.</span></div>
+            <div class="file-row"><code>docs/architecture.svg</code><span>Architecture picture used by the README.</span></div>
+            <div class="file-row"><code>docs/code-tour.html</code><span>This self-contained visual guide.</span></div>
+            <div class="file-row"><code>scripts/show-code-tour.sh</code><span>Starts a local server and prints the presentation link.</span></div>
+          </div>
+        </div>
+        <div class="note">The star marks AGENTS.md as a local untracked file. target/ contains generated compiler output, not maintained source. Package-level ignore files do not ignore the workspace-root target/.</div>
+      </section>
+
+      <section class="slide" aria-labelledby="s8-title">
+        <div class="eyebrow">07 / Reading the code</div>
+        <h2 id="s8-title">A quick map through lib.rs and main.rs</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>plumb-core/src/lib.rs, top to bottom</h3>
+            <p><code>ObjectId</code> and <code>Vec3</code> define small value types.</p>
+            <p><code>BoxGeometry</code>, <code>Geometry</code>, and <code>Object</code> describe a scene item.</p>
+            <p><code>Scene</code> owns a version, next ID, and object vector.</p>
+            <p><code>SceneError</code> gives failures readable names.</p>
+            <p><code>impl Scene</code> exposes create, lookup, move, encode, decode, and validation.</p>
+            <p><code>#[cfg(test)]</code> keeps unit tests beside the behavior they protect.</p>
+          </div>
+          <div class="card">
+            <h3>plumb-cli/src/main.rs, top to bottom</h3>
+            <p><code>main</code> turns success or failure into a process exit code.</p>
+            <p><code>run</code> matches the command name and performs its workflow.</p>
+            <p><code>required</code> and <code>number</code> parse positional inputs.</p>
+            <p><code>read_scene</code> reads text, then calls core deserialization and validation.</p>
+            <p><code>write_scene</code> serializes and writes JSON.</p>
+            <p><code>usage</code> is the CLI help text.</p>
+          </div>
+        </div>
+        <div class="card analogy" style="margin-top:14px"><h3>Code-reading analogy</h3><p>Start with the public API like reading a building's front entrance sign. Then follow one CLI command into that API. You can understand the supported behavior without first reading every helper.</p></div>
+        <div class="note">There are three core unit tests: create/move/JSON round-trip, invalid dimensions/positions, and invalid scene IDs. The CLI currently has no automated tests.</div>
+      </section>
+
+      <section class="slide" aria-labelledby="s9-title">
+        <div class="eyebrow">08 / The roadmap</div>
+        <h2 id="s9-title">Five milestones, five concrete outcomes</h2>
+        <p>Each milestone adds a usable layer while keeping one modeling engine authoritative.</p>
+        <div class="milestones">
+          <div class="milestone"><span class="mnum">1</span><div><strong>Core Engine and CLI <span class="status"><i class="dot"></i> foundation merged</span></strong><span>Finish dependable CLI behavior and tests so people, scripts, and existing agents can create, inspect, change, validate, and save scene files.</span></div></div>
+          <div class="milestone"><span class="mnum">2</span><div><strong>Desktop Viewport <span class="status"><i class="dot planned"></i> planned</span></strong><span>Open those same files in a read-only 3D viewer. Users can visually inspect objects and refresh scenes edited through the CLI.</span></div></div>
+          <div class="milestone"><span class="mnum">3</span><div><strong>Interactive Modeling <span class="status"><i class="dot planned"></i> planned</span></strong><span>Select, move, resize, snap, undo, redo, and save changes with the same core rules and reliable file synchronization.</span></div></div>
+          <div class="milestone"><span class="mnum">4</span><div><strong>AI-Agent Integration <span class="status"><i class="dot planned"></i> planned</span></strong><span>Offer structured, validated tools and optional MCP transport after the CLI and operation contracts are dependable. Users bring their own agent.</span></div></div>
+          <div class="milestone"><span class="mnum">5</span><div><strong>Production Readiness and Release <span class="status"><i class="dot planned"></i> planned</span></strong><span>Add CI, installation and contribution docs, format compatibility guidance, end-to-end verification, packaging for chosen platforms, and a practical first-release checklist.</span></div></div>
+        </div>
+        <div class="note">Current CLI details: inspect emits JSON, while add-box reports success as plain text. Help is global, extra arguments are not consistently rejected, and scene writes use a direct file write. Consistent JSON results and errors, strict argument handling, safer writes, object queries, and CLI workflow tests are roadmap work. The desktop app and dedicated structured agent transport do not exist yet.</div>
+      </section>
+
+      <section class="slide" aria-labelledby="s10-title">
+        <div class="eyebrow">09 / Honest boundaries</div>
+        <h2 id="s10-title">What exists now, and what comes next</h2>
+        <div class="grid-2">
+          <div class="card"><div class="status"><i class="dot"></i> implemented</div><h3 style="margin-top:10px">A useful small base</h3><p>Rust scene data, stable IDs, box creation, position changes, validation, version 1 JSON load/save, and CLI commands for new, add-box, move, and inspect.</p><p>The CLI uses the same public core operations that future interfaces should share.</p></div>
+          <div class="card future"><div class="status"><i class="dot planned"></i> planned</div><h3 style="margin-top:10px">Next layers</h3><p>Agent-ready output conventions, object-level queries, desktop visualization and editing, undo/redo, optional structured tools, packaging, and richer workflows.</p><p>Those capabilities are tracked in GitHub milestones; they are not present just because they appear in the roadmap.</p></div>
+        </div>
+        <div class="card analogy" style="margin-top:16px"><h3>The Plumb idea</h3><p>Plumb provides the workshop and its dependable tools. You choose who gives the instructions, whether that is you, a shell script, or an AI agent you already trust.</p></div>
+        <div class="note">End of tour. Open the source files next to this presentation and follow the paths described on slide 8.</div>
+      </section>
+    </main>
+    <footer class="controls">
+      <div class="counter" id="counter" aria-live="polite">1 / 10</div>
+      <div class="top-note">Navigate with <span class="kbd">←</span> <span class="kbd">→</span> or your keyboard</div>
+      <div class="nav-group">
+        <button class="nav-btn" id="prev" type="button" aria-label="Previous slide">← Back</button>
+        <button class="nav-btn" id="next" type="button">Next →</button>
+      </div>
+    </footer>
+  </div>
+  <script>
+    (() => {
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const counter = document.getElementById("counter");
+      const progress = document.getElementById("progress");
+      const previous = document.getElementById("prev");
+      const next = document.getElementById("next");
+      let index = 0;
+
+      function show(nextIndex) {
+        index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+        slides.forEach((slide, slideIndex) => {
+          slide.classList.toggle("active", slideIndex === index);
+          slide.setAttribute("aria-hidden", String(slideIndex !== index));
+        });
+        counter.textContent = `${index + 1} / ${slides.length}`;
+        progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+        previous.disabled = index === 0;
+        next.disabled = index === slides.length - 1;
+      }
+
+      previous.addEventListener("click", () => show(index - 1));
+      next.addEventListener("click", () => show(index + 1));
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight" || event.key === "PageDown") show(index + 1);
+        if (event.key === "ArrowLeft" || event.key === "PageUp") show(index - 1);
+        if (event.key === "Home") show(0);
+        if (event.key === "End") show(slides.length - 1);
+      });
+      show(0);
+    })();
+  </script>
+</body>
+</html>
