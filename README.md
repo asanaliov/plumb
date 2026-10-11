@@ -3,6 +3,8 @@
 Plumb is an open-source, Rust-first 3D modeling environment built around a shared scene engine.
 The engine exposes explicit operations that desktop tools, command-line workflows, scripts, and agent interfaces can share.
 
+![Architecture diagram showing the implemented CLI and planned desktop and agent interfaces sharing plumb-core, which serializes scene data as JSON.](docs/architecture.svg)
+
 ## What works today
 
 The `plumb-core` crate provides versioned scene data, stable object IDs, box creation, position changes, validation, and JSON serialization.
