@@ -1,0 +1,5 @@
+/target/
+/apps/plumb-desktop/node_modules/
+/apps/plumb-desktop/dist/
+/apps/plumb-desktop/src-tauri/target/
+/apps/plumb-desktop/src-tauri/gen/schemas/
