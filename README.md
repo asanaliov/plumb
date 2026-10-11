@@ -10,16 +10,40 @@ The engine exposes explicit operations that desktop tools, command-line workflow
 The `plumb-core` crate provides versioned scene data, stable object IDs, box creation, position changes, validation, and JSON serialization.
 The `plumb-cli` application creates and edits scene files and prints their contents as JSON.
 
-The desktop application, viewport, and agent protocol are planned and are not implemented yet.
+The desktop app is an early read-only scene viewer.
+It loads and validates Plumb JSON through `plumb-core` and displays boxes in an orbitable 3D viewport.
+Editing and agent protocols are still planned.
 
 ## Build
 
-Install a stable Rust toolchain, then run:
+Install a stable Rust toolchain and the platform dependencies described in the desktop section, then run:
 
 ```sh
 cargo build --workspace
 cargo test --workspace
 ```
+
+## Desktop app
+
+Install Node.js and npm, Rust, and the platform dependencies required by [Tauri](https://v2.tauri.app/start/prerequisites/).
+On Debian or Ubuntu, install the Linux dependencies with:
+
+```sh
+sudo apt update
+sudo apt install pkg-config libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+```
+
+Then start the desktop development app:
+
+```sh
+cd apps/plumb-desktop
+npm install
+npm run tauri dev
+```
+
+The window opens centered at 1100 × 700 logical pixels and keeps within the available work area.
+Choose **Open example scene** to see a sample, or **Open scene** to load a local `.json` scene file.
+Orbit with left-drag, zoom with the scroll wheel, and pan with right-drag.
 
 ## CLI example
 

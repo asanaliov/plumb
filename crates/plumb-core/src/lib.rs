@@ -109,6 +109,9 @@ impl Scene {
     pub fn objects(&self) -> &[Object] {
         &self.objects
     }
+    pub const fn version(&self) -> u32 {
+        self.version
+    }
     pub fn get(&self, id: ObjectId) -> Option<&Object> {
         self.objects.iter().find(|object| object.id == id)
     }

@@ -2,5 +2,6 @@
 members = [
     "crates/plumb-core",
     "apps/plumb-cli",
+    "apps/plumb-desktop/src-tauri",
 ]
 resolver = "2"

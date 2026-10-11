@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "next_id": 3,
+  "objects": [
+    {
+      "id": 1,
+      "name": "Foundation",
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "geometry": {
+        "type": "box",
+        "geometry": { "size": { "x": 5, "y": 0.6, "z": 3 } }
+      }
+    },
+    {
+      "id": 2,
+      "name": "Column",
+      "position": { "x": 0, "y": 1.1, "z": 0 },
+      "geometry": {
+        "type": "box",
+        "geometry": { "size": { "x": 0.8, "y": 1.6, "z": 0.8 } }
+      }
+    }
+  ]
+}
