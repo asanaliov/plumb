@@ -23,6 +23,7 @@ function dimensions(scene: SceneDocument) {
 export default function App() {
   const [scene, setScene] = useState<SceneDocument | null>(null);
   const [path, setPath] = useState<string | null>(null);
+  const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,6 +41,7 @@ export default function App() {
       const loaded = await invoke<SceneDocument>("load_scene", { path: selected });
       setScene(loaded);
       setPath(selected);
+      setSelectedObjectId(null);
     } catch (reason) {
       setError(String(reason));
     } finally {
@@ -54,6 +56,7 @@ export default function App() {
       const loaded = await invoke<SceneDocument>("load_sample_scene");
       setScene(loaded);
       setPath(null);
+      setSelectedObjectId(null);
     } catch (reason) {
       setError(String(reason));
     } finally {
@@ -96,11 +99,17 @@ export default function App() {
           {scene && scene.objects.length > 0 ? (
             <div className="object-list">
               {scene.objects.map((object) => (
-                <div className="object-row" key={object.id}>
+                <button
+                  className={`object-row${selectedObjectId === object.id ? " object-row-selected" : ""}`}
+                  key={object.id}
+                  type="button"
+                  aria-pressed={selectedObjectId === object.id}
+                  onClick={() => setSelectedObjectId(object.id)}
+                >
                   <span className="object-glyph" aria-hidden="true">▧</span>
                   <span className="object-name">{object.name}</span>
                   <span className="object-id">{object.id}</span>
-                </div>
+                </button>
               ))}
             </div>
           ) : (
@@ -132,7 +141,11 @@ export default function App() {
             <div className="viewport-units">SCENE UNITS</div>
           </div>
           <div className="viewport-stage">
-            <SceneViewport document={scene} />
+            <SceneViewport
+              document={scene}
+              selectedObjectId={selectedObjectId}
+              onSelectObject={setSelectedObjectId}
+            />
             {!scene && (
               <div className="welcome-card">
                 <div className="welcome-index">A SMALL SPACE TO START</div>
@@ -161,7 +174,13 @@ export default function App() {
           </div>
           <footer className="viewport-status">
             <span><span className="status-dot" /> {scene ? "Scene loaded" : "No scene open"}</span>
-            <span>{scene ? `${scene.objects.length} objects` : "Plumb scene viewer"}</span>
+            <span>
+              {selectedObjectId && scene
+                ? `Selected: ${scene.objects.find((object) => object.id === selectedObjectId)?.name ?? "Object"}`
+                : scene
+                  ? `${scene.objects.length} objects`
+                  : "Plumb scene viewer"}
+            </span>
           </footer>
         </section>
       </div>

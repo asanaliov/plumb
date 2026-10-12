@@ -5,10 +5,13 @@ import type { SceneDocument } from "./scene";
 
 interface SceneViewportProps {
   document: SceneDocument | null;
+  selectedObjectId: string | null;
+  onSelectObject: (objectId: string | null) => void;
 }
 
-export default function SceneViewport({ document }: SceneViewportProps) {
+export default function SceneViewport({ document, selectedObjectId, onSelectObject }: SceneViewportProps) {
   const host = useRef<HTMLDivElement>(null);
+  const meshes = useRef(new Map<string, THREE.Mesh>());
 
   useEffect(() => {
     const element = host.current;
@@ -23,6 +26,7 @@ export default function SceneViewport({ document }: SceneViewportProps) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
     element.appendChild(renderer.domElement);
+    meshes.current.clear();
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -53,6 +57,7 @@ export default function SceneViewport({ document }: SceneViewportProps) {
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         scene.add(mesh);
+        meshes.current.set(object.id, mesh);
       }
 
       if (document.objects.length > 0) {
@@ -82,6 +87,33 @@ export default function SceneViewport({ document }: SceneViewportProps) {
     });
     resizeObserver.observe(element);
 
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerStart: { x: number; y: number } | null = null;
+    const handlePointerDown = (event: PointerEvent) => {
+      pointerStart = event.button === 0 ? { x: event.clientX, y: event.clientY } : null;
+    };
+    const handlePointerUp = (event: PointerEvent) => {
+      if (!pointerStart) return;
+      const movedX = event.clientX - pointerStart.x;
+      const movedY = event.clientY - pointerStart.y;
+      pointerStart = null;
+      if (Math.hypot(movedX, movedY) > 4) return;
+
+      const bounds = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+      pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObjects([...meshes.current.values()], false)[0];
+      onSelectObject(hit ? String(hit.object.userData.objectId) : null);
+    };
+    const handlePointerCancel = () => {
+      pointerStart = null;
+    };
+    renderer.domElement.addEventListener("pointerdown", handlePointerDown);
+    renderer.domElement.addEventListener("pointerup", handlePointerUp);
+    renderer.domElement.addEventListener("pointercancel", handlePointerCancel);
+
     let animationFrame = 0;
     const render = () => {
       controls.update();
@@ -93,6 +125,9 @@ export default function SceneViewport({ document }: SceneViewportProps) {
     return () => {
       window.cancelAnimationFrame(animationFrame);
       resizeObserver.disconnect();
+      renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
+      renderer.domElement.removeEventListener("pointerup", handlePointerUp);
+      renderer.domElement.removeEventListener("pointercancel", handlePointerCancel);
       controls.dispose();
       scene.traverse((node) => {
         if (node instanceof THREE.Mesh) {
@@ -103,8 +138,18 @@ export default function SceneViewport({ document }: SceneViewportProps) {
       });
       renderer.dispose();
       renderer.domElement.remove();
+      meshes.current.clear();
     };
-  }, [document]);
+  }, [document, onSelectObject]);
+
+  useEffect(() => {
+    for (const [objectId, mesh] of meshes.current) {
+      const material = mesh.material as THREE.MeshStandardMaterial;
+      const selected = objectId === selectedObjectId;
+      material.color.set(selected ? "#d2f19a" : "#a7c97a");
+      material.emissive.set(selected ? "#263917" : "#000000");
+    }
+  }, [document, selectedObjectId]);
 
   return <div className="viewport-canvas" ref={host} aria-label="3D scene viewport" />;
 }
