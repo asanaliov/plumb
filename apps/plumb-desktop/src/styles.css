@@ -45,7 +45,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .panel-heading { height: 51px; flex: 0 0 51px; display: flex; align-items: center; padding: 0 18px; border-bottom: 1px solid #252b27; color: #b9c0b8; font-size: 11px; font-weight: 700; letter-spacing: 0.15px; }
 .panel-count { margin-left: auto; display: grid; place-items: center; min-width: 19px; height: 19px; padding: 0 5px; border: 1px solid #353c37; border-radius: 5px; color: #8e988e; font: 10px var(--mono); }
 .object-list { padding: 10px 8px; }
-.object-row { display: flex; align-items: center; gap: 9px; height: 33px; padding: 0 10px; color: #cdd2cb; border-radius: 5px; font-size: 11px; }
+.object-row { display: flex; align-items: center; gap: 9px; width: calc(100% - 16px); height: 33px; margin: 0 8px; padding: 0 10px; border: 0; color: #cdd2cb; border-radius: 5px; background: transparent; text-align: left; cursor: pointer; font-size: 11px; }
+.object-row:hover { background: #222824; }
+.object-row-selected { background: #293326; color: #e2edcf; box-shadow: inset 2px 0 #b7d883; }
+.object-row-selected .object-id { color: #a4b88b; }
 .object-glyph { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; color: var(--accent); background: #303a2b; font-size: 12px; }
 .object-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .object-id { margin-left: auto; font: 9px var(--mono); color: #69736b; }
