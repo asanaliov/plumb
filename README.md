@@ -66,3 +66,12 @@ CLI diagnostics are written to standard error, while inspection output is JSON o
 
 Run `cargo fmt --all`, `cargo check --workspace`, and `cargo test --workspace` before proposing changes.
 Keep scene semantics in `plumb-core` so additional interfaces can reuse the same behavior.
+
+## Continuous integration and releases
+
+GitHub Actions checks pull requests and pushes to `master` with Rust formatting, workspace checks, workspace tests, and a production desktop frontend build.
+The checks use the committed npm lockfile and stable Rust.
+
+Pushing a version tag such as `v0.1.0` builds desktop installers and opens a draft GitHub release for review.
+The initial release targets are Linux x86_64, Windows x86_64, and macOS arm64.
+After reviewing the generated installers and release notes, a repository maintainer can publish the draft release.
