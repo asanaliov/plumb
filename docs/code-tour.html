@@ -147,7 +147,7 @@
         <h1 id="s1-title">One scene.<br><span class="accent">One shared engine.</span></h1>
         <p class="lead">See how a command becomes a validated 3D object, how the scene is saved as JSON, and what each project file contributes.</p>
         <div class="tag">Start with ./scripts/show-code-tour.sh · use ← → keys to navigate</div>
-        <div class="note">Current scope: Rust scene core and CLI are implemented. The desktop viewport and structured agent interface are roadmap work.</div>
+        <div class="note">Current scope: Rust scene core, CLI, and a desktop scene editor are implemented. Structured agent tools remain roadmap work.</div>
       </section>
 
       <section class="slide" aria-labelledby="s2-title">
@@ -156,17 +156,17 @@
         <p>The CLI accepts a request. The core checks and changes the scene. JSON carries the saved result between runs.</p>
         <svg class="diagram" viewBox="0 0 960 300" role="img" aria-labelledby="map-title map-desc">
           <title id="map-title">Plumb code architecture</title>
-          <desc id="map-desc">The implemented CLI sends commands to plumb-core. The core validates and serializes a JSON scene. Desktop and structured agent clients are planned and will use the same core.</desc>
+          <desc id="map-desc">The CLI and desktop editor send scene operations to plumb-core. The core validates and serializes a JSON scene. Structured agent tools are planned.</desc>
           <defs>
             <marker id="tour-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#4f5d75"/></marker>
             <marker id="tour-arrow-soft" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#7a8399"/></marker>
           </defs>
           <path class="arrow" d="M245 146H354"/>
           <path class="arrow" d="M606 146H716"/>
-          <path class="arrow-future" d="M245 72H292Q300 72 300 80V118Q300 126 308 126H354"/>
+          <path class="arrow" d="M245 72H292Q300 72 300 80V118Q300 126 308 126H354"/>
           <path class="arrow-future" d="M245 230H292Q300 230 300 222V174Q300 166 308 166H354"/>
-          <rect class="planned-box" x="25" y="42" width="220" height="60" rx="12"/>
-          <text class="label" x="48" y="69">Desktop viewport</text><text class="small" x="48" y="88">planned visual client</text>
+          <rect class="box" x="25" y="42" width="220" height="60" rx="12"/>
+          <text class="label" x="48" y="69">Desktop editor</text><text class="small" x="48" y="88">implemented visual client</text>
           <rect class="box" x="25" y="116" width="220" height="60" rx="12"/>
           <text class="label" x="48" y="143">Plumb CLI</text><text class="small" x="48" y="162">implemented command line</text>
           <rect class="planned-box" x="25" y="200" width="220" height="60" rx="12"/>
@@ -372,20 +372,20 @@ target/  generated build output</pre>
         <p>Each milestone adds a usable layer while keeping one modeling engine authoritative.</p>
         <div class="milestones">
           <div class="milestone"><span class="mnum">1</span><div><strong>Core Engine and CLI <span class="status"><i class="dot"></i> foundation merged</span></strong><span>Finish dependable CLI behavior and tests so people, scripts, and existing agents can create, inspect, change, validate, and save scene files.</span></div></div>
-          <div class="milestone"><span class="mnum">2</span><div><strong>Desktop Viewport <span class="status"><i class="dot planned"></i> planned</span></strong><span>Open those same files in a read-only 3D viewer. Users can visually inspect objects and refresh scenes edited through the CLI.</span></div></div>
-          <div class="milestone"><span class="mnum">3</span><div><strong>Interactive Modeling <span class="status"><i class="dot planned"></i> planned</span></strong><span>Select, move, resize, snap, undo, redo, and save changes with the same core rules and reliable file synchronization.</span></div></div>
+          <div class="milestone"><span class="mnum">2</span><div><strong>Desktop Viewport <span class="status"><i class="dot"></i> implemented</span></strong><span>Open scene files in an orbitable 3D viewport, inspect boxes, and select objects from either the scene list or the viewport.</span></div></div>
+          <div class="milestone"><span class="mnum">3</span><div><strong>Interactive Modeling <span class="status"><i class="dot"></i> in progress</span></strong><span>Move a selected object through the shared core and save validated scene files. Resize, snap, undo, and redo remain future steps.</span></div></div>
           <div class="milestone"><span class="mnum">4</span><div><strong>AI-Agent Integration <span class="status"><i class="dot planned"></i> planned</span></strong><span>Offer structured, validated tools and optional MCP transport after the CLI and operation contracts are dependable. Users bring their own agent.</span></div></div>
-          <div class="milestone"><span class="mnum">5</span><div><strong>Production Readiness and Release <span class="status"><i class="dot planned"></i> planned</span></strong><span>Add CI, installation and contribution docs, format compatibility guidance, end-to-end verification, packaging for chosen platforms, and a practical first-release checklist.</span></div></div>
+          <div class="milestone"><span class="mnum">5</span><div><strong>Production Readiness and Release <span class="status"><i class="dot"></i> in progress</span></strong><span>CI checks and draft multi-platform release builds are configured. Installation and contribution docs, format compatibility guidance, end-to-end verification, and a first-release checklist remain.</span></div></div>
         </div>
-        <div class="note">Current CLI details: inspect emits JSON, while add-box reports success as plain text. Help is global, extra arguments are not consistently rejected, and scene writes use a direct file write. Consistent JSON results and errors, strict argument handling, safer writes, object queries, and CLI workflow tests are roadmap work. The desktop app and dedicated structured agent transport do not exist yet.</div>
+        <div class="note">Current CLI details: inspect emits JSON, while add-box reports success as plain text. Help is global, extra arguments are not consistently rejected, and scene writes use a direct file write. Consistent JSON results and errors, strict argument handling, safer writes, object queries, and CLI workflow tests are roadmap work. Desktop resize, undo, redo, and structured agent transport are not implemented yet.</div>
       </section>
 
       <section class="slide" aria-labelledby="s10-title">
         <div class="eyebrow">09 / Honest boundaries</div>
         <h2 id="s10-title">What exists now, and what comes next</h2>
         <div class="grid-2">
-          <div class="card"><div class="status"><i class="dot"></i> implemented</div><h3 style="margin-top:10px">A useful small base</h3><p>Rust scene data, stable IDs, box creation, position changes, validation, version 1 JSON load/save, and CLI commands for new, add-box, move, and inspect.</p><p>The CLI uses the same public core operations that future interfaces should share.</p></div>
-          <div class="card future"><div class="status"><i class="dot planned"></i> planned</div><h3 style="margin-top:10px">Next layers</h3><p>Agent-ready output conventions, object-level queries, desktop visualization and editing, undo/redo, optional structured tools, packaging, and richer workflows.</p><p>Those capabilities are tracked in GitHub milestones; they are not present just because they appear in the roadmap.</p></div>
+          <div class="card"><div class="status"><i class="dot"></i> implemented</div><h3 style="margin-top:10px">A useful small base</h3><p>Rust scene data, stable IDs, box creation, position changes, validation, version 1 JSON load/save, and CLI commands for new, add-box, move, and inspect.</p><p>The desktop app can select and move boxes through the same core rules, then save the validated scene.</p></div>
+          <div class="card future"><div class="status"><i class="dot planned"></i> next</div><h3 style="margin-top:10px">Next layers</h3><p>Resizing, snapping, undo/redo, agent-ready output conventions, object-level queries, structured tools, and richer workflows.</p><p>Those capabilities are tracked in GitHub milestones; they are not present just because they appear in the roadmap.</p></div>
         </div>
         <div class="card analogy" style="margin-top:16px"><h3>The Plumb idea</h3><p>Plumb provides the workshop and its dependable tools. You choose who gives the instructions, whether that is you, a shell script, or an AI agent you already trust.</p></div>
         <div class="note">End of tour. Open the source files next to this presentation and follow the paths described on slide 8.</div>

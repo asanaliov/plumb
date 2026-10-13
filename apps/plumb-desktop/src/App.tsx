@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import SceneViewport from "./SceneViewport";
-import type { SceneDocument } from "./scene";
+import type { BoxObject, SceneDocument, Vec3 } from "./scene";
 
 function fileName(path: string | null) {
   if (!path) return "Starter scene";
@@ -20,12 +21,81 @@ function dimensions(scene: SceneDocument) {
   );
 }
 
+function PositionEditor({
+  object,
+  disabled,
+  onApply,
+}: {
+  object: BoxObject;
+  disabled: boolean;
+  onApply: (position: Vec3) => void;
+}) {
+  const [coordinates, setCoordinates] = useState({
+    x: String(object.position.x),
+    y: String(object.position.y),
+    z: String(object.position.z),
+  });
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCoordinates({
+      x: String(object.position.x),
+      y: String(object.position.y),
+      z: String(object.position.z),
+    });
+    setValidationError(null);
+  }, [object.id, object.position.x, object.position.y, object.position.z]);
+
+  function applyPosition(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const values = [coordinates.x, coordinates.y, coordinates.z];
+    const position = values.map(Number);
+    if (values.some((value) => value.trim() === "") || position.some((value) => !Number.isFinite(value))) {
+      setValidationError("Enter a finite number for each coordinate.");
+      return;
+    }
+
+    setValidationError(null);
+    onApply({ x: position[0], y: position[1], z: position[2] });
+  }
+
+  return (
+    <form className="object-inspector" onSubmit={applyPosition}>
+      <div className="inspector-heading">POSITION</div>
+      <div className="position-fields">
+        {(["x", "y", "z"] as const).map((axis) => (
+          <label className={`position-field position-field-${axis}`} key={axis}>
+            <span>{axis.toUpperCase()}</span>
+            <input
+              aria-label={`${axis.toUpperCase()} position`}
+              type="number"
+              step="any"
+              value={coordinates[axis]}
+              disabled={disabled}
+              onChange={(event) => setCoordinates((current) => ({ ...current, [axis]: event.target.value }))}
+            />
+          </label>
+        ))}
+      </div>
+      {validationError && <div className="field-error" role="alert">{validationError}</div>}
+      <button className="button button-quiet apply-position" type="submit" disabled={disabled}>
+        Apply position
+      </button>
+    </form>
+  );
+}
+
 export default function App() {
   const [scene, setScene] = useState<SceneDocument | null>(null);
   const [path, setPath] = useState<string | null>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function confirmDiscardChanges() {
+    return !dirty || window.confirm("Discard unsaved scene changes?");
+  }
 
   async function openScene() {
     setError(null);
@@ -35,6 +105,7 @@ export default function App() {
       filters: [{ name: "Plumb scene", extensions: ["json"] }],
     });
     if (typeof selected !== "string") return;
+    if (!confirmDiscardChanges()) return;
 
     setLoading(true);
     try {
@@ -42,6 +113,7 @@ export default function App() {
       setScene(loaded);
       setPath(selected);
       setSelectedObjectId(null);
+      setDirty(false);
     } catch (reason) {
       setError(String(reason));
     } finally {
@@ -50,6 +122,8 @@ export default function App() {
   }
 
   async function openSample() {
+    if (!confirmDiscardChanges()) return;
+
     setError(null);
     setLoading(true);
     try {
@@ -57,6 +131,49 @@ export default function App() {
       setScene(loaded);
       setPath(null);
       setSelectedObjectId(null);
+      setDirty(false);
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function moveSelectedObject(position: Vec3) {
+    if (!scene || !selectedObjectId) return;
+
+    setError(null);
+    setLoading(true);
+    try {
+      const updated = await invoke<SceneDocument>("move_object", {
+        sceneJson: scene.sceneJson,
+        objectId: selectedObjectId,
+        position,
+      });
+      setScene(updated);
+      setDirty(true);
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveScene() {
+    if (!scene) return;
+
+    setError(null);
+    setLoading(true);
+    try {
+      const selectedPath = path ?? await save({
+        defaultPath: "scene.json",
+        filters: [{ name: "Plumb scene", extensions: ["json"] }],
+      });
+      if (!selectedPath) return;
+
+      await invoke("save_scene", { path: selectedPath, sceneJson: scene.sceneJson });
+      setPath(selectedPath);
+      setDirty(false);
     } catch (reason) {
       setError(String(reason));
     } finally {
@@ -65,6 +182,7 @@ export default function App() {
   }
 
   const size = scene ? dimensions(scene) : null;
+  const selectedObject = scene?.objects.find((object) => object.id === selectedObjectId) ?? null;
 
   return (
     <main className="app-shell">
@@ -79,6 +197,13 @@ export default function App() {
           <span className="document-kind">Scene file</span>
         </div>
         <div className="topbar-actions">
+          <button
+            className={dirty ? "button button-primary" : "button button-quiet"}
+            onClick={saveScene}
+            disabled={!scene || loading}
+          >
+            {loading ? "Working…" : "Save scene"}
+          </button>
           <button className="button button-quiet" onClick={openSample} disabled={loading}>
             Open example
           </button>
@@ -119,6 +244,15 @@ export default function App() {
             </div>
           )}
 
+          {selectedObject && (
+            <PositionEditor
+              key={selectedObject.id}
+              object={selectedObject}
+              disabled={loading}
+              onApply={moveSelectedObject}
+            />
+          )}
+
           {scene && (
             <div className="scene-summary">
               <div className="summary-label">SCENE SUMMARY</div>
@@ -155,7 +289,7 @@ export default function App() {
                   <button className="button button-primary" onClick={openSample} disabled={loading}>Open example scene</button>
                   <button className="text-button" onClick={openScene} disabled={loading}>Choose a file <span aria-hidden="true">↗</span></button>
                 </div>
-                <div className="welcome-footnote"><span className="lock-mark" aria-hidden="true">⌑</span> Read-only preview · Your scene stays on this device</div>
+                <div className="welcome-footnote"><span className="lock-mark" aria-hidden="true">⌑</span> Scenes stay local · Rust validates every move</div>
               </div>
             )}
             {scene?.objects.length === 0 && (
@@ -173,7 +307,10 @@ export default function App() {
             )}
           </div>
           <footer className="viewport-status">
-            <span><span className="status-dot" /> {scene ? "Scene loaded" : "No scene open"}</span>
+            <span>
+              <span className={`status-dot${dirty ? " status-dot-dirty" : ""}`} />
+              {dirty ? "Unsaved changes" : scene ? "Scene loaded" : "No scene open"}
+            </span>
             <span>
               {selectedObjectId && scene
                 ? `Selected: ${scene.objects.find((object) => object.id === selectedObjectId)?.name ?? "Object"}`

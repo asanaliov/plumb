@@ -3,16 +3,16 @@
 Plumb is an open-source, Rust-first 3D modeling environment built around a shared scene engine.
 The engine exposes explicit operations that desktop tools, command-line workflows, scripts, and agent interfaces can share.
 
-![Architecture diagram showing the implemented CLI and planned desktop and agent interfaces sharing plumb-core, which serializes scene data as JSON.](docs/architecture.svg)
+![Architecture diagram showing the implemented CLI and desktop editor sharing plumb-core, with structured agent tools planned.](docs/architecture.svg)
 
 ## What works today
 
 The `plumb-core` crate provides versioned scene data, stable object IDs, box creation, position changes, validation, and JSON serialization.
 The `plumb-cli` application creates and edits scene files and prints their contents as JSON.
 
-The desktop app is an early read-only scene viewer.
-It loads and validates Plumb JSON through `plumb-core` and displays boxes in an orbitable 3D viewport.
-Editing and agent protocols are still planned.
+The desktop app loads and validates Plumb JSON through `plumb-core`, displays boxes in an orbitable 3D viewport, and lets users select boxes in the scene list or viewport.
+Users can change the selected box's position through a validated core operation and save the scene as JSON.
+Resize, undo, and agent protocols are still planned.
 
 ## Build
 
@@ -43,6 +43,8 @@ npm run tauri dev
 
 The window opens centered at 1100 × 700 logical pixels and keeps within the available work area.
 Choose **Open example scene** to see a sample, or **Open scene** to load a local `.json` scene file.
+Select a box in the scene list or viewport, change its X, Y, or Z position, then choose **Apply position**.
+Choose **Save scene** to write the changes back to the opened file, or choose a destination for the sample scene.
 Orbit with left-drag, zoom with the scroll wheel, and pan with right-drag.
 
 ## CLI example
@@ -61,6 +63,7 @@ CLI diagnostics are written to standard error, while inspection output is JSON o
 
 - `crates/plumb-core/` contains scene types, validation, modeling operations, and serialization.
 - `apps/plumb-cli/` exposes the core operations in a scriptable command-line interface.
+- `apps/plumb-desktop/` provides the Tauri desktop editor and 3D viewport.
 
 ## Development
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 380" role="img" aria-labelledby="architecture-title architecture-desc">
   <title id="architecture-title">Plumb architecture</title>
-  <desc id="architecture-desc">The implemented command-line interface and planned desktop and agent interfaces use the shared Rust modeling core, which validates and serializes scenes as JSON.</desc>
+  <desc id="architecture-desc">The command-line interface and desktop editor use the shared Rust modeling core, which validates and serializes scenes as JSON. Structured agent tools are planned.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto">
       <path d="M0 0L8 4L0 8Z" fill="#4f5d75"/>
@@ -14,8 +14,10 @@
     <path d="M272 110H320Q328 110 328 118V146Q328 154 336 154H392"/>
     <path d="M656 200H736"/>
   </g>
-  <g fill="none" stroke="#7a8399" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow-future)">
+  <g fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)">
     <path d="M272 190H344Q352 190 352 198V200H392"/>
+  </g>
+  <g fill="none" stroke="#7a8399" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow-future)">
     <path d="M272 270H360Q368 270 368 262V254Q368 246 376 246H392"/>
   </g>
 
@@ -26,9 +28,9 @@
       <text x="72" y="128" fill="#4f5d75" font-size="12">Implemented · create, edit, inspect</text>
     </g>
     <g>
-      <rect x="48" y="160" width="224" height="60" rx="8" fill="#f5f5f5" stroke="#7a8399" stroke-dasharray="4 3"/>
+      <rect x="48" y="160" width="224" height="60" rx="8" fill="#ffffff" stroke="#2d3142"/>
       <text x="72" y="186" fill="#2d3142" font-size="16" font-weight="600">Desktop app</text>
-      <text x="72" y="206" fill="#4f5d75" font-size="12">Planned · interactive viewport</text>
+      <text x="72" y="206" fill="#4f5d75" font-size="12">Implemented · select, move, save</text>
     </g>
     <g>
       <rect x="48" y="240" width="224" height="60" rx="8" fill="#f5f5f5" stroke="#7a8399" stroke-dasharray="4 3"/>
