@@ -17,4 +17,5 @@ export interface BoxObject {
 export interface SceneDocument {
   version: number;
   objects: BoxObject[];
+  sceneJson: string;
 }

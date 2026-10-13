@@ -49,6 +49,18 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .object-row:hover { background: #222824; }
 .object-row-selected { background: #293326; color: #e2edcf; box-shadow: inset 2px 0 #b7d883; }
 .object-row-selected .object-id { color: #a4b88b; }
+.object-inspector { margin: 4px 14px 0; padding: 13px 0 16px; border-top: 1px solid #2a312c; }
+.inspector-heading { margin-bottom: 10px; color: #a2c171; font: 9px var(--mono); letter-spacing: 0.9px; }
+.position-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.position-field { display: grid; gap: 5px; min-width: 0; color: #879188; font: 9px var(--mono); }
+.position-field-x > span { color: #d18a79; }
+.position-field-y > span { color: #a6ca78; }
+.position-field-z > span { color: #7fa8da; }
+.position-field input { min-width: 0; width: 100%; height: 28px; padding: 0 6px; border: 1px solid #343c36; border-radius: 4px; outline: none; background: #111513; color: #dce2d8; font: 10px var(--mono); }
+.position-field input:focus { border-color: #8ea96a; }
+.position-field input:disabled { opacity: 0.65; }
+.field-error { margin-top: 8px; color: #e4a392; font-size: 9px; line-height: 1.45; }
+.apply-position { width: 100%; height: 29px; margin-top: 9px; }
 .object-glyph { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; color: var(--accent); background: #303a2b; font-size: 12px; }
 .object-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .object-id { margin-left: auto; font: 9px var(--mono); color: #69736b; }
@@ -91,6 +103,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .viewport-status { height: 29px; flex: 0 0 29px; display: flex; justify-content: space-between; align-items: end; padding: 0 3px; color: #657067; font: 9px var(--mono); }
 .viewport-status > span:first-child { display: flex; align-items: center; gap: 7px; }
 .status-dot { width: 5px; height: 5px; border-radius: 50%; background: #718e5a; }
+.status-dot-dirty { background: #e7b76c; box-shadow: 0 0 0 3px #e7b76c22; }
 
 @media (max-width: 900px) {
   .workspace { grid-template-columns: 205px 1fr; }
